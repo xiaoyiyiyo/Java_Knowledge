@@ -1,0 +1,34 @@
+以下目录 
+|--project 
+     |--src 
+         |--javaapplication 
+             |--Test.java 
+             |--file1.txt 
+         |--file2.txt 
+     |--build 
+         |--javaapplication 
+             |--Test.class 
+             |--file3.txt 
+         |--file4.txt 
+
+在上面的目录中，有一个src目录，这是JAVA源文件的目录，有一个build目录，这是JAVA编译后文件(.class文件等）的存放目录 
+
+file3.txt: 
+方法一：File file3 = new File(Test.class.getResource("file3.txt").getFile()); 
+方法二：File file3 = new File(Test.class.getResource("/javaapplication/file3.txt").getFile()); 
+方法三：File file3 = new File(Test.class.getClassLoader().getResource("javaapplication/file3.txt").getFile()); 
+
+file4.txt: 
+方法一：File file4 = new File(Test.class.getResource("/file4.txt").getFile()); 
+方法二：File file4 = new File(Test.class.getClassLoader().getResource("file4.txt").getFile()); 
+
+
+对于file1.txt,file2.txt,只能写上它们的绝对路径，不能像file3与file4一样用class.getResource()这种方法获得，它们的获取方法如下 
+假如整个project目录放在c:/下，那么file1与file2的获取方法分别为 
+file1.txt 
+方法一：File file1 = new File("c:/project/src/javaapplication/file1.txt"); 
+方法二：。。。没有 
+
+file2.txt 
+方法一：File file2 = new File("c:/project/src/file2.txt"); 
+方法二：。。。也没有 
