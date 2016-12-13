@@ -1,0 +1,69 @@
+cas原理
+
+比较与交换
+CAS有三个参数，内存位置V、旧的预期值A、新的预期值B。 
+当且仅当V符合预期值A的时候，CAS用新值B原子化的更新V的值；否则他什么都不做。
+在任何情况下都会返回V的真实值。（这个变量称为compare-and-set，无论操作是否成功都会返回。）CAS的意思是，"我任务V的值应该是A，如果是A则将其赋值给B，若不是，则不修改，并告诉我应该为多少."
+CAS是以项乐观技术--它抱着成功的希望进行更新，并且如果， 另一个线程在上次检查后更新了变量，它能够发现错误。
+
+当多个线程试图使用CAS同时更新相同的变量时,其中一个会胜出，并更新变量的值，而其他的都会失败。失败的线程不会被挂起。
+
+
+主要应用：
+AtomicInteger, AtomicBoolean，AtomicLong等等
+AtomicReference.
+
+构建原子栈
+public class ConcurrentStack<E> {
+    AtomicReference<Node<E>> top = new AtomicReference<Node<E>>();
+    /
+     * 入栈，把当前元素复制为新元素的下一个元素，把新元素赋值为当前元素
+     *
+     * @param item
+     */
+    public void push(E item) {
+        Node<E> newHead = new Node<E>(item);
+        Node<E> oldHead;
+        while (true) {
+            oldHead = top.get();
+            newHead.next = oldHead;
+            if (top.compareAndSet(oldHead, newHead)) {
+                return;
+            }
+        }
+    }
+    /
+     * 出栈，获取当前元素，并且把当前元素的下一个元素作为当前元素
+     *
+     * @return
+     */
+    public E pop() {
+        while (true) {
+            Node<E> oldHead = top.get();
+            if (oldHead == null) {
+                return null;
+            }
+            Node<E> newHead = oldHead.next;
+            if (top.compareAndSet(oldHead, newHead)) {
+                return oldHead.item;
+            }
+        }
+    }
+    private static class Node<E> {
+        public final E item;
+        public Node<E> next;
+        public Node(E item) {
+            this.item = item;
+        }
+    }
+}
+
+问题：
+CAS操作容易导致ABA问题,也就是在做a++之间，a可能被多个线程修改过了，只不过回到了最初的值，这时CAS会认为a的值没有变。
+a在外面逛了一圈回来，你能保证它没有做任何坏事，不能！！也许它讨闲，把b的值减了一下，把c的值加了一下等等，更有甚者如果a是一个对象，这个对象有可能是新创建出来的，a是一个引用呢情况又如何，所以这里面还是存在着很多问题的。
+解决：
+可以考虑增加一个修改计数，只有修改计数不变的且a值不变的情况下才做a++，也可以考虑引入版本号，当版本号相同时才做a++操作等。 例如：AtomicStampedReference.
+
+
+参考： http://www.importnew.com/21282.html (高并发：无锁)
+      http://nemotan.github.io/2015/12/java%E4%B8%AD%E6%97%A0%E9%94%81cas%E6%93%8D%E4%BD%9C%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/ (java中无锁cas操作原理分析)
