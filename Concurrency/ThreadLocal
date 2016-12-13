@@ -4,3 +4,129 @@ ThreadLocal设计初衷是 提供线程内部的局部变量，这种变量在�
 但是ThreadLocal也为解决线程安全问题提供了一个思路，通过为每个线程提供一个独立的变量从而解决变量并发访问的冲突问题。
 
 举例：
+public class TestThreadLocal {
+    private static final ThreadLocal<Integer> value = new ThreadLocal<Integer>() {
+        @Override
+        protected Integer initialValue() {
+            return 0;
+        }
+    };
+    public static void main(String[] args) {
+        for (int i = 0; i < 5; i++) {
+            new Thread(new MyThread(i)).start();
+        }
+    }
+    static class MyThread implements Runnable {
+        private int index;
+        public MyThread(int index) {
+            this.index = index;
+        }
+        public void run() {
+            System.out.println("线程" + index + "的初始value:" + value.get());
+            for (int i = 0; i < 10; i++) {
+                value.set(value.get() + i);
+            }
+            System.out.println("线程" + index + "的累加value:" + value.get());
+        }
+    }
+}
+
+原理：
+public class ThreadLocal<T> {
+// 这里省略了许多其他代码
+
+// 将value的值保存于当前线程的本地变量中
+public void set(T value) {
+    // 获取当前线程
+    Thread t = Thread.currentThread();
+    // 调用getMap方法获得当前线程中的本地变量ThreadLocalMap
+    ThreadLocalMap map = getMap(t);
+    // 如果ThreadLocalMap已存在，直接使用
+    if (map != null)
+         // 以当前的ThreadLocal的实例作为key，存储于当前线程的
+         // ThreadLocalMap中，如果当前线程中被定义了多个不同的ThreadLocal
+         // 的实例，则它们会作为不同key进行存储而不会互相干扰
+         map.set(this, value);
+    else
+         // ThreadLocalMap不存在，则为当前线程创建一个新的
+         createMap(t, value);
+}
+
+ // 获取当前线程中以当前ThreadLocal实例为key的变量值
+public T get() {
+    // 获取当前线程
+    Thread t = Thread.currentThread();
+    // 获取当前线程中的ThreadLocalMap
+    ThreadLocalMap map = getMap(t);
+    if (map != null) {
+        // 获取当前线程中以当前ThreadLocal实例为key的变量值
+        ThreadLocalMap.Entry e = map.getEntry(this);
+        if (e != null)
+            return (T)e.value;
+    }
+    // 当map不存在时，设置初始值
+    return setInitialValue();
+}
+
+// 从当前线程中获取与之对应的ThreadLocalMap
+ThreadLocalMap getMap(Thread t) {
+    return t.threadLocals;
+}
+
+ // 创建当前线程中的ThreadLocalMap
+void createMap(Thread t, T firstValue) {
+    // 调用构造函数生成当前线程中的ThreadLocalMap
+    t.threadLocals = new ThreadLocalMap(this, firstValue);
+}
+
+// ThreadLoaclMap的定义
+static class ThreadLocalMap {
+    // 这里省略了许多代码
+}
+}
+需要注意的是Thread类中包含一个成员变量： ThreadLocal.ThreadLocalMap threadLocals = null;
+ 
+总结一下设计思路： 每个Thread维护一个ThreadLocalMap映射表，这个映射表的key是ThreadLocal实例本身，value是真正需要存储的Object。
+与我们普通想法 “每个ThreadLocal类创建一个Map，然后用线程的ID作为Map的key，实例对象作为Map的value，这样就能达到各个线程的值隔离的效果” 刚好相反。
+这样设计的主要有以下几点优势：
+1. 每个Map的Entry数量变小了：之前是Thread的数量，现在是ThreadLocal的数量，能提高性能，据说性能的提升不是一点两点(没有亲测)
+2. 当Thread销毁之后对应的ThreadLocalMap也就随之销毁了，能减少内存使用量。
+
+纵向隔离 —— 线程（Thread）与线程（Thread）之间的数据访问隔离。这一点由线程（Thread）的数据结构保证。因为每个线程（Thread）在进行对象访问时，访问的都是各自线程自己的ThreadLocalMap。
+横向隔离 —— 同一个线程中，不同的ThreadLocal实例操作的对象之间的相互隔离。这一点由ThreadLocalMap在存储时，采用当前ThreadLocal的实例作为key来保证。
+
+在处理多线程并发访问变量问题时：
+synchronized: 以时间换空间，   ThreadLocal以空间换时间
+
+进阶：
+ThreadLocalMap是使用ThreadLocal的弱引用作为Key的
+
++-----------+         +----------------------------------------------------------------------------------------+
+|  stack    |         |                                                                                        |
+|           |         |                                                                                        |
+|           |         |                                                                                        |
+|           |         |                             weak ref                                                   |
+|ThreadLocal+-------> |  ThreadLocal  <----  ---  ---  ---  ---  ---  ---  ----+                               |
+|   Ref     |         |                                                                                        |
+|           |         |                                                        |                               |
+|           |         |                                              +---------+---+                           |
+|           |         |                                              |      |Key   |                           |
+|           |         |                                              |      |      |                           |
+|           |         |                                 +----------> |Entry +------+                           |
+|           |         |                                 |            |      |      |                +-------+  |
+|           |         |                                 |            |      |Value +--------------> |Object |  |
+|  Thread   +-------> |  Thread +------->   ThreadLocal +            +-------------+                +-------+  |
+|    Ref    |         |                        Map                                                             |
+|           |         |                                                                                        |
++-----------+         +----------------------------------------------------------------------------------------+
+
+
+
+
+
+
+
+
+
+
+
