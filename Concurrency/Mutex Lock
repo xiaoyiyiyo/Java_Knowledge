@@ -15,6 +15,8 @@ public class MutableInteger{
 }
 可对get和set方法进行同步(synchronized),使之成为线程安全类。
 
+===================================================================================
+
 ReentrantLock(重入锁):
 Java5.0增加的一种锁机制，其并不是一种替代内置锁的方法，而是当内置锁不适用时，可供选择的高级方式。
 基本语法上, ReentrantLock 与 synchronized 很相似, 它们都具备一样的线程重入特性，只是代码写法上有点区别而已，一个表现为 API 层面的互斥锁（Lock），
@@ -42,3 +44,30 @@ public boolean trySendOnSharedLine(String message, long timeout, TimeUnit unit)
     lock.unlock();
   }
 }
+当需要这些高级功能的时候才应该使用ReentrantLock, 否则，应该优先使用synchronized，毕竟内置锁为开发人员所熟悉，简单紧凑，而且未来也更可能会对
+synchronized进行性能提升。
+
+===================================================================================
+
+ReentrantReadWriteLock(读写锁) :
+首先ReentrantReadWriteLock与ReentrantLock彼此之间没有继承或实现的关系。ReentrantReadWriteLock实现ReadWriteLock接口，ReadWriteLock并不是
+Lock的子接口，它只是借助Lock来实现读写两个视角，即
+public interface ReadWriteLock{
+  Lock readLock();  //共享锁
+  Lock writeLock(); //独占锁
+}
+且ReentrantReadWriteLock描述的是 一个资源能够被多个读线程访问，或者被一个写线程访问，但是不能同时存在读写线程。并不是独占锁。
+几个有趣的特性：
+1. 重入性   
+  "读-读"不互斥  
+  "读-写"互斥
+  "写-写"互斥 
+  写线程获取写入锁后可以再次获取读取锁， 但读线程获取读取锁后不能再获取写入锁
+2. 锁降级
+  与重入性最后一句原理相通，即写线程获取写入锁后可以获取读取锁，然后释放写入锁，这样从写入锁降级变成了读取锁。
+  原因可能为：如果在释放写锁后，在得到读锁前，有可能被其他线程打断
+  没有锁升级，读取锁不能直接升级为写入锁的，因为获取一个写锁需要释放所有读锁，如果有两个读锁获取了写入锁，而又不全部释放读锁会造成死锁。
+读写锁适用于读取操作多的应用。 
+
+
+注：
