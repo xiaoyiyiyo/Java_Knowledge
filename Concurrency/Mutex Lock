@@ -71,3 +71,8 @@ public interface ReadWriteLock{
 
 
 注：
+重入: 一个线程允许获得已经由它自己持有的锁。
+重入意味着获取锁的操作粒度是“线程”，而不是“调用”(pthread互斥体(POSIX线程)的获取操作是以“调用”为粒度的)。
+
+公平/不公平锁
+synchronized与默认的ReentrantLock,ReentrantReadWriteLock一样是非公平锁，而ReentrantLock,ReentrantReadWriteLock的构造函数中提供了公平性的选择。
