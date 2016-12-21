@@ -101,3 +101,25 @@ Thread-B   +--------------------->  | b = 1| +---> |y = a(0)|
 2. 线程封闭
 3. 双重检查锁定
 4. CopyOnWrite容器
+
+线程封闭常用的包括 1. 栈封闭 2. ThreadLocal 
+
+双重检查锁定：
+如果出于性能考虑需要对静态域使用延迟初始化，就使用Lazy initialization holder class模式。
+private static class FieldHolder{
+  static final FieldType field = computeFieldValue();
+}
+static FieldType getField(){return FieldHolder.field;}
+如果出于性能的考虑需要对实例域使用延迟初始化，就使用双重检查模式。
+private volatile FiledType filed;  // volatile
+FieldType getField(){
+  FieldType result = field;
+  if(result == null){
+    synchronized(this){
+    	result = field;
+	if(result == null)
+	   field = result = computeFieldValue();
+    }
+  }
+  return result;
+}
