@@ -5,7 +5,7 @@
 * **append-only log**
 * **hash index**
 
-![79e3448da5805a72a328e39dc82053ae.png](evernotecid://D7132B30-5FF2-4477-A261-F127579C311C/appyinxiangcom/24850787/ENResource/p5)
+![Figure 3-1](https://github.com/xiaoyiyiyo/Java_Knowledge/blob/master/DDIA/png/Figure%203-1.png)
 
 ###### **Issues**
 
@@ -18,8 +18,8 @@
 拆分成variable-size segment
 可以删除或关闭已满的segment
 compaction segment里的数据 或 多个segments (可后台运行)
-![b9b84af7b99117c0d3a1c83f9ff7de00.png](evernotecid://D7132B30-5FF2-4477-A261-F127579C311C/appyinxiangcom/24850787/ENResource/p2)
-![6d83631d54b1db101e8273171b616d58.png](evernotecid://D7132B30-5FF2-4477-A261-F127579C311C/appyinxiangcom/24850787/ENResource/p4)
+![Figure 3-2](https://github.com/xiaoyiyiyo/Java_Knowledge/blob/master/DDIA/png/Figure%203-2.png)
+![Figure 3-3](https://github.com/xiaoyiyiyo/Java_Knowledge/blob/master/DDIA/png/Figure%203-3.png)
 &nbsp;
 
 * 如何删除记录
@@ -67,7 +67,7 @@ compaction segment里的数据 或 多个segments (可后台运行)
 **Advantages**
 * Merging segments is simple and efficient.
 (MergeSort algorithm)
-![f251163e027cb0d6c90d3d00ef5fc985.png](evernotecid://D7132B30-5FF2-4477-A261-F127579C311C/appyinxiangcom/24850787/ENResource/p6)
+![Figure 3-4](https://github.com/xiaoyiyiyo/Java_Knowledge/blob/master/DDIA/png/Figure%203-4.png)
 *When if the same key appears in several input segments?*
 We can keep the value from the most recent segment and discard the values in older segments.
 &nbsp;
